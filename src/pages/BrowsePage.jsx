@@ -1,410 +1,295 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import "./styles/BrowsePage.css";
-import MovieCard from "../components/common/MovieCard";
-import Loader from "../components/common/Loader";
+import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
-import request, { getImageUrl } from "../requestMethod";
-import { FaSearch, FaFilter, FaTimes } from "react-icons/fa";
+import BrowseHeader from "../components/browse/BrowseHeader";
+import BrowseFilters from "../components/browse/BrowseFilters";
+import BrowseResults from "../components/browse/BrowseResults";
+import BrowsePagination from "../components/browse/BrowsePagination";
+import request from "../requestMethod";
+import "./styles/BrowsePage.css";
 
 const BrowsePage = () => {
+  // Router
   const location = useLocation();
   const navigate = useNavigate();
-  const searchParams = new URLSearchParams(location.search);
+  const queryParams = new URLSearchParams(location.search);
   
-  // Get content type from URL or default to 'popular'
-  const [contentType, setContentType] = useState(searchParams.get("type") || "popular");
+  // Extract query parameters
+  const initialType = queryParams.get("type") || "all"; // all, popular, movies, tvshows
+  const initialQuery = queryParams.get("query") || "";
+  const initialGenre = queryParams.get("genre") || "";
+  const initialYear = queryParams.get("year") || "";
+  const initialSort = queryParams.get("sort") || "popularity.desc";
   
-  // Content states
-  const [content, setContent] = useState([]);
+  // State
+  const [contentType, setContentType] = useState(initialType);
+  const [searchQuery, setSearchQuery] = useState(initialQuery);
+  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  
-  // Filter states
-  const [filters, setFilters] = useState({
-    genre: searchParams.get("genre") || "",
-    year: searchParams.get("year") || "",
-    sort: searchParams.get("sort") || "popularity.desc",
-    query: searchParams.get("query") || "",
-  });
-  
-  const [showFilters, setShowFilters] = useState(false);
+  const [totalPages, setTotalPages] = useState(0);
   const [genres, setGenres] = useState([]);
+  const [selectedGenres, setSelectedGenres] = useState(
+    initialGenre ? initialGenre.split(",").map(Number) : []
+  );
   const [years, setYears] = useState([]);
-
-  // Generate years (current year to 1990)
+  const [selectedYear, setSelectedYear] = useState(initialYear || "");
+  const [sortBy, setSortBy] = useState(initialSort);
+  const [showFilters, setShowFilters] = useState(false);
+  
+  // Generate years from 1900 to current year
   useEffect(() => {
     const currentYear = new Date().getFullYear();
-    const yearsList = Array.from({ length: currentYear - 1989 }, (_, i) => currentYear - i);
-    setYears(yearsList);
+    const yearArray = [];
+    for (let year = currentYear; year >= 1900; year--) {
+      yearArray.push(year.toString());
+    }
+    setYears(yearArray);
   }, []);
-
-  // Fetch genres
+  
+  // Fetch genres when the component mounts or content type changes
   useEffect(() => {
     const fetchGenres = async () => {
       try {
-        const mediaType = contentType === "tvshows" ? "tv" : "movie";
-        const response = await request.get(`/genre/${mediaType}/list`);
-        setGenres(response.data.genres);
-      } catch (err) {
-        console.error("Failed to fetch genres", err);
+        // Determine endpoint based on content type
+        const endpoint = contentType === "tvshows" ? "genre/tv/list" : "genre/movie/list";
+        const { data } = await request.get(endpoint);
+        setGenres(data.genres || []);
+      } catch (error) {
+        console.error("Error fetching genres:", error);
+        setGenres([]);
       }
     };
     
     fetchGenres();
   }, [contentType]);
-
-  // Update URL when filters change
-  useEffect(() => {
+  
+  // Update URL with current filters
+  const updateURLParams = useCallback(() => {
     const params = new URLSearchParams();
-    params.set("type", contentType);
-    if (filters.genre) params.set("genre", filters.genre);
-    if (filters.year) params.set("year", filters.year);
-    if (filters.sort) params.set("sort", filters.sort);
-    if (filters.query) params.set("query", filters.query);
-    if (page > 1) params.set("page", page);
+    
+    if (contentType && contentType !== "all") params.set("type", contentType);
+    if (searchQuery) params.set("query", searchQuery);
+    if (selectedGenres.length) params.set("genre", selectedGenres.join(","));
+    if (selectedYear) params.set("year", selectedYear);
+    if (sortBy !== "popularity.desc") params.set("sort", sortBy);
+    if (page > 1) params.set("page", page.toString());
     
     navigate(`/browse?${params.toString()}`, { replace: true });
-  }, [contentType, filters, page, navigate]);
-
-  // Fetch content based on content type and filters
+  }, [contentType, searchQuery, selectedGenres, selectedYear, sortBy, page, navigate]);
+  
+  // Fetch content based on filters
   const fetchContent = useCallback(async () => {
     setLoading(true);
     setError(null);
     
     try {
       let endpoint;
-      let params = { page };
-
+      let params = {
+        page,
+      };
+      
+      // Add sort parameter based on content type
+      if (sortBy) {
+        // Handle different sort parameters for TV shows
+        if (contentType === "tvshows" && sortBy.startsWith("primary_release_date")) {
+          // Convert movie date parameter to TV date parameter
+          params.sort_by = sortBy.replace("primary_release_date", "first_air_date");
+        } else {
+          params.sort_by = sortBy;
+        }
+      }
+      
       // Handle search query
-      if (filters.query) {
-        endpoint = "/search/multi";
-        params.query = filters.query;
-      } else {
-        // Determine endpoint based on content type
+      if (searchQuery) {
+        endpoint = "search/multi";
+        params.query = searchQuery;
+      } 
+      // Handle content type
+      else {
         switch (contentType) {
           case "popular":
-            endpoint = "/movie/popular";
+            endpoint = "movie/popular";
             break;
           case "movies":
-            endpoint = "/discover/movie";
+            endpoint = "discover/movie";
             break;
           case "tvshows":
-            endpoint = "/discover/tv";
+            endpoint = "discover/tv";
             break;
           default:
-            endpoint = "/movie/popular";
+            endpoint = "trending/all/week";
         }
-        
-        // Add filters to params
-        if (filters.genre) params.with_genres = filters.genre;
-        if (filters.year) {
-          if (contentType === "tvshows") {
-            params.first_air_date_year = filters.year;
-          } else {
-            params.primary_release_year = filters.year;
-          }
+      }
+      
+      // Add year filter if selected
+      if (selectedYear) {
+        if (contentType === "tvshows") {
+          params.first_air_date_year = selectedYear;
+        } else {
+          params.primary_release_year = selectedYear;
         }
-        if (filters.sort) params.sort_by = filters.sort;
+      }
+      
+      // Add genre filter if selected
+      if (selectedGenres.length > 0) {
+        params.with_genres = selectedGenres.join(",");
       }
 
-      const response = await request.get(endpoint, { params });
+      console.log("API Request:", { endpoint, params });
+
+      // Get the data
+      const { data } = await request.get(endpoint, { params });
       
-      const isTvShow = contentType === "tvshows" || 
-                      (filters.query && response.data.results.some(item => item.media_type === "tv"));
+      // Process the results based on the endpoint
+      let processedResults;
+      if (searchQuery && endpoint === "search/multi") {
+        // Filter out people and other non-movie/tv results
+        processedResults = data.results.filter(
+          item => item.media_type === "movie" || item.media_type === "tv"
+        );
+      } else {
+        processedResults = data.results;
+      }
       
-      // Format content
-      const formattedContent = response.data.results
-        .filter(item => {
-          if (filters.query) {
-            return item.media_type === "movie" || item.media_type === "tv";
-          }
-          return true;
-        })
-        .map(item => {
-          // Determine if it's a TV show
-          const isTV = isTvShow || item.media_type === "tv";
-          
-          // Generate random duration for movies
-          const minutes = Math.floor(Math.random() * 90) + 90;
-          const hours = Math.floor(minutes / 60);
-          const remainingMinutes = minutes % 60;
-          const randomDuration = `${hours}h ${remainingMinutes}m`;
-          
-          return {
-            id: item.id,
-            title: isTV ? item.name : item.title,
-            image: getImageUrl(item.poster_path),
-            quality: item.vote_average > 7.5 ? "4K" : "HD",
-            rating: item.vote_average.toFixed(1),
-            meta: `${
-              (isTV ? item.first_air_date : item.release_date)?.split("-")[0] || ""
-            } • ${isTV ? "TV Series" : randomDuration}`,
-            genre:
-              item.genre_ids && item.genre_ids.length > 0
-                ? getGenreName(item.genre_ids[0])
-                : isTV ? "TV Show" : "Movie",
-            mediaType: isTV ? "tv" : "movie", // Store media type for navigation
-          };
-        });
-      
-      setContent(formattedContent);
-      setTotalPages(response.data.total_pages > 20 ? 20 : response.data.total_pages); // Limit to 20 pages
+      setItems(processedResults || []);
+      setTotalPages(Math.min(data.total_pages || 0, 100)); // API limit is 500 pages, but we're limiting to 100
     } catch (err) {
-      console.error("Failed to fetch content", err);
-      setError("Failed to load content. Please try again later.");
+      console.error("Error fetching content:", err);
+      setError("Failed to load content. Please try again.");
+      setItems([]);
     } finally {
       setLoading(false);
     }
-  }, [contentType, filters, page]);
-
+  }, [page, contentType, searchQuery, selectedGenres, selectedYear, sortBy]);
+  
+  // Apply filters and fetch content
   useEffect(() => {
     fetchContent();
   }, [fetchContent]);
-
-  // Get genre name from ID
-  const getGenreName = (genreId) => {
-    const genre = genres.find(g => g.id === genreId);
-    return genre ? genre.name : contentType === "tvshows" ? "TV Show" : "Movie";
-  };
-
-  // Handle content type change
+  
+  // Update URL when filters change
+  useEffect(() => {
+    updateURLParams();
+  }, [contentType, searchQuery, selectedGenres, selectedYear, sortBy, page, updateURLParams]);
+  
+  // Handle filter changes
   const handleContentTypeChange = (type) => {
     setContentType(type);
     setPage(1);
   };
-
-  // Handle filter change
-  const handleFilterChange = (filterType, value) => {
-    setFilters(prev => ({ ...prev, [filterType]: value }));
-    setPage(1); // Reset to first page when filters change
+  
+  const handleGenreChange = (genreId) => {
+    setSelectedGenres(prev => {
+      if (prev.includes(genreId)) {
+        return prev.filter(id => id !== genreId);
+      } else {
+        return [...prev, genreId];
+      }
+    });
+    setPage(1);
   };
-
-  // Handle search
+  
+  const handleYearChange = (year) => {
+    setSelectedYear(year);
+    setPage(1);
+  };
+  
+  const handleSortChange = (sort) => {
+    setSortBy(sort);
+    setPage(1);
+  };
+  
+  const handleClearFilters = () => {
+    setSelectedGenres([]);
+    setSelectedYear("");
+    setSortBy("popularity.desc");
+    setPage(1);
+    
+    // Preserve only the content type in the URL
+    const params = new URLSearchParams();
+    if (contentType !== "all") params.set("type", contentType);
+    navigate(`/browse?${params.toString()}`, { replace: true });
+  };
+  
+  const toggleFilters = () => {
+    setShowFilters(!showFilters);
+  };
+  
   const handleSearch = (e) => {
     e.preventDefault();
+    const formData = new FormData(e.target);
+    const query = formData.get("searchQuery");
+    setSearchQuery(query);
     setPage(1);
   };
 
-  // Handle page change
-  const handlePageChange = (newPage) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      setPage(newPage);
-      window.scrollTo(0, 0);
+  // Get the page title based on content type and search query
+  const getPageTitle = () => {
+    if (searchQuery) {
+      return `Search Results for "${searchQuery}"`;
+    }
+    
+    switch (contentType) {
+      case "popular":
+        return "Popular Movies";
+      case "movies":
+        return "Browse Movies";
+      case "tvshows":
+        return "Browse TV Shows";
+      default:
+        return "Browse All";
     }
   };
-
+  
   return (
     <>
+      <Navbar />
       <div className="browse-page">
-        <div className="browse-header">
-          <div className="browse-title-section">
-            <h1>
-              {filters.query 
-                ? `Search Results for "${filters.query}"`
-                : contentType === "popular" 
-                  ? "Popular Movies" 
-                  : contentType === "movies" 
-                    ? "Movies" 
-                    : "TV Shows"}
-            </h1>
-            <button 
-              className="filter-toggle-btn" 
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              {showFilters ? <FaTimes /> : <FaFilter />} Filters
-            </button>
-          </div>
-
-          <div className="browse-tabs">
-            <button 
-              className={`browse-tab ${contentType === "popular" ? "active" : ""}`}
-              onClick={() => handleContentTypeChange("popular")}
-            >
-              Popular
-            </button>
-            <button 
-              className={`browse-tab ${contentType === "movies" ? "active" : ""}`}
-              onClick={() => handleContentTypeChange("movies")}
-            >
-              Movies
-            </button>
-            <button 
-              className={`browse-tab ${contentType === "tvshows" ? "active" : ""}`}
-              onClick={() => handleContentTypeChange("tvshows")}
-            >
-              TV Shows
-            </button>
-          </div>
-
-          <form className="browse-search" onSubmit={handleSearch}>
-            <input
-              type="text"
-              placeholder="Search titles..."
-              value={filters.query}
-              onChange={(e) => handleFilterChange("query", e.target.value)}
-            />
-            <button type="submit">
-              <FaSearch />
-            </button>
-          </form>
-
-          {showFilters && (
-            <div className="browse-filters">
-              <div className="filter-group">
-                <label htmlFor="genre-filter">Genre</label>
-                <select 
-                  id="genre-filter" 
-                  value={filters.genre} 
-                  onChange={(e) => handleFilterChange("genre", e.target.value)}
-                >
-                  <option value="">All Genres</option>
-                  {genres.map(genre => (
-                    <option key={genre.id} value={genre.id}>
-                      {genre.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="filter-group">
-                <label htmlFor="year-filter">Year</label>
-                <select 
-                  id="year-filter" 
-                  value={filters.year} 
-                  onChange={(e) => handleFilterChange("year", e.target.value)}
-                >
-                  <option value="">All Years</option>
-                  {years.map(year => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="filter-group">
-                <label htmlFor="sort-filter">Sort By</label>
-                <select 
-                  id="sort-filter" 
-                  value={filters.sort} 
-                  onChange={(e) => handleFilterChange("sort", e.target.value)}
-                >
-                  <option value="popularity.desc">Popularity</option>
-                  <option value="vote_average.desc">Rating (High to Low)</option>
-                  <option value="vote_average.asc">Rating (Low to High)</option>
-                  {contentType !== "tvshows" ? (
-                    <>
-                      <option value="primary_release_date.desc">Release Date (New to Old)</option>
-                      <option value="primary_release_date.asc">Release Date (Old to New)</option>
-                    </>
-                  ) : (
-                    <>
-                      <option value="first_air_date.desc">Air Date (New to Old)</option>
-                      <option value="first_air_date.asc">Air Date (Old to New)</option>
-                    </>
-                  )}
-                </select>
-              </div>
-
-              {Object.values(filters).some(value => value) && (
-                <button 
-                  className="clear-filters-btn"
-                  onClick={() => {
-                    setFilters({
-                      genre: "",
-                      year: "",
-                      sort: "popularity.desc",
-                      query: "",
-                    });
-                    setPage(1);
-                  }}
-                >
-                  Clear All Filters
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-
+        {/* Header with search and filter toggle */}
+        <BrowseHeader
+          title={getPageTitle()}
+          searchQuery={searchQuery}
+          showFilters={showFilters}
+          toggleFilters={toggleFilters}
+          handleSearch={handleSearch}
+        />
+        
+        {/* Filters section */}
+        <BrowseFilters
+          showFilters={showFilters}
+          contentType={contentType}
+          genres={genres}
+          selectedGenres={selectedGenres}
+          selectedYear={selectedYear}
+          sortBy={sortBy}
+          years={years}
+          handleContentTypeChange={handleContentTypeChange}
+          handleGenreChange={handleGenreChange}
+          handleYearChange={handleYearChange}
+          handleSortChange={handleSortChange}
+          handleClearFilters={handleClearFilters}
+        />
+        
+        {/* Results section */}
         <div className="browse-content">
-          {loading ? (
-            <div className="browse-loading">
-              <Loader size="lg" text="Loading content..." type="film" />
-            </div>
-          ) : error ? (
-            <div className="browse-error">{error}</div>
-          ) : content.length > 0 ? (
-            <>
-              <div className="browse-grid">
-                {content.map(item => (
-                  <MovieCard 
-                    key={`${item.mediaType}-${item.id}`}
-                    {...item} 
-                    // Pass mediaType to navigate correctly to movies or TV shows
-                    navigateTo={`/${item.mediaType}/${item.id}`}
-                  />
-                ))}
-              </div>
-              
-              {totalPages > 1 && (
-                <div className="browse-pagination">
-                  <button 
-                    disabled={page === 1}
-                    onClick={() => handlePageChange(page - 1)}
-                    className="page-btn"
-                  >
-                    Previous
-                  </button>
-                  
-                  <div className="page-numbers">
-                    {page > 1 && (
-                      <button onClick={() => handlePageChange(1)} className="page-btn">
-                        1
-                      </button>
-                    )}
-                    
-                    {page > 3 && <span className="page-ellipsis">...</span>}
-                    
-                    {page > 2 && (
-                      <button onClick={() => handlePageChange(page - 1)} className="page-btn">
-                        {page - 1}
-                      </button>
-                    )}
-                    
-                    <button className="page-btn active">{page}</button>
-                    
-                    {page < totalPages - 1 && (
-                      <button onClick={() => handlePageChange(page + 1)} className="page-btn">
-                        {page + 1}
-                      </button>
-                    )}
-                    
-                    {page < totalPages - 2 && <span className="page-ellipsis">...</span>}
-                    
-                    {page < totalPages && (
-                      <button onClick={() => handlePageChange(totalPages)} className="page-btn">
-                        {totalPages}
-                      </button>
-                    )}
-                  </div>
-                  
-                  <button 
-                    disabled={page === totalPages}
-                    onClick={() => handlePageChange(page + 1)}
-                    className="page-btn"
-                  >
-                    Next
-                  </button>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="browse-no-results">
-              No results found. Try different filters or search terms.
-            </div>
+          <BrowseResults
+            loading={loading}
+            error={error}
+            items={items}
+            fetchContent={fetchContent}
+            contentType={contentType}
+          />
+          
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <BrowsePagination
+              page={page}
+              totalPages={totalPages}
+              setPage={setPage}
+            />
           )}
         </div>
       </div>

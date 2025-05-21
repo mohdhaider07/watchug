@@ -104,7 +104,6 @@ const Navbar = () => {
         <Link to="/" className="navbar-title">watchug</Link>
         <ul className="navbar-links">
           <li><Link to="/">Home</Link></li>
-          <li><Link to="/browse">Browse</Link></li>
           <li><Link to="/browse?type=popular">Popular</Link></li>
           <li><Link to="/browse?type=movies">Movies</Link></li>
           <li><Link to="/browse?type=tvshows">TV Shows</Link></li>
