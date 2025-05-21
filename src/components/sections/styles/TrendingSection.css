@@ -1,0 +1,31 @@
+/* TrendingSection styles */
+@import url("../../common/styles/MovieCard.css");
+
+.trending-section {
+  padding: 48px 40px;
+}
+
+.trending-title {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 32px;
+  color: #a78bfa;
+}
+
+.trending-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 24px;
+}
+
+@media (min-width: 768px) {
+  .trending-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .trending-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}

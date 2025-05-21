@@ -1,0 +1,165 @@
+/* MovieCard styles */
+.movie-card {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.3s, box-shadow 0.3s;
+  background: #18181b;
+}
+
+.movie-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 32px 0 rgba(139, 92, 246, 0.2);
+}
+
+.movie-card-img-wrap {
+  position: relative;
+  height: 300px;
+  overflow: hidden;
+}
+
+.movie-card-quality {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 6px;
+  z-index: 10;
+  transition: opacity 0.3s;
+}
+
+.hide-on-hover {
+  opacity: 1;
+}
+
+.movie-card:hover .hide-on-hover {
+  opacity: 0;
+}
+
+.movie-card-rating {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #ca8a04;
+  color: #fff;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 6px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.show-on-hover {
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.movie-card:hover .show-on-hover {
+  opacity: 1;
+}
+
+.movie-card-img-gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(17, 24, 39, 0.7) 50%,
+    #111827 100%
+  );
+  opacity: 0;
+  transition: opacity 0.3s;
+  z-index: 10;
+}
+
+.movie-card:hover .movie-card-img-gradient {
+  opacity: 1;
+}
+
+.movie-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.movie-card-play-wrap {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 12px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  z-index: 20;
+  display: flex;
+  justify-content: center;
+}
+
+.movie-card:hover .movie-card-play-wrap {
+  opacity: 1;
+}
+
+.movie-card-play-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #9333ea;
+  color: #fff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.movie-card-play-btn:hover {
+  background: #7c3aed;
+}
+
+.movie-card-info {
+  padding: 12px;
+  background: #27272a;
+}
+
+.movie-card-title {
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.movie-card-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 6px;
+  font-size: 0.9rem;
+  color: #a1a1aa;
+}
+
+.movie-card-genre {
+  background: #3f3f46;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
+
+/* New styles for the fallback link */
+.movie-card-link {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 5; /* Lower than other clickable elements */
+  cursor: pointer;
+  opacity: 0;
+}

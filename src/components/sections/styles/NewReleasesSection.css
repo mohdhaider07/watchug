@@ -1,0 +1,32 @@
+/* NewReleasesSection styles */
+@import url("../../common/styles/MovieCard.css");
+
+.new-releases-section {
+  padding: 48px 40px;
+  /* background: rgba(31, 41, 55, 0.3); */
+}
+
+.new-releases-title {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 32px;
+  color: #a78bfa;
+}
+
+.new-releases-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 24px;
+}
+
+@media (min-width: 768px) {
+  .new-releases-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .new-releases-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}

@@ -1,0 +1,104 @@
+/* Footer styles */
+.footer {
+  /* Add any custom footer styles here if needed */
+}
+
+/* Pure CSS Footer styles */
+.footer {
+  background: rgba(0, 0, 0, 0.6);
+  padding: 32px 40px;
+  color: #fff;
+}
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 32px;
+}
+@media (min-width: 768px) {
+  .footer-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+.footer-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 16px;
+  background: linear-gradient(to right, #a78bfa, #4f46e5);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.footer-desc {
+  color: #a1a1aa;
+  font-size: 1rem;
+}
+.footer-heading {
+  font-weight: bold;
+  margin-bottom: 16px;
+}
+.footer-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.footer-list li {
+  margin-bottom: 8px;
+}
+.footer-list a {
+  color: #a1a1aa;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.footer-list a:hover {
+  color: #a78bfa;
+}
+.footer-socials {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.footer-social {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #27272a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 1.2rem;
+  transition: background 0.2s;
+}
+.footer-social:hover {
+  background: #7c3aed;
+}
+.footer-app-desc {
+  color: #a1a1aa;
+  font-size: 1rem;
+}
+.footer-apps {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+}
+.footer-app {
+  background: #27272a;
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.footer-app:hover {
+  background: #3f3f46;
+}
+.footer-bottom {
+  border-top: 1px solid #27272a;
+  margin-top: 32px;
+  padding-top: 24px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.95rem;
+}

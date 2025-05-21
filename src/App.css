@@ -1,0 +1,26 @@
+/* App.css - Converted from Tailwind styles */
+
+#webcrumbs {
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.app-container {
+  width: 1440px;
+  /* background-color: #111827; bg-gray-900 */
+  color: white;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+}
+
+/* Additional general styles */
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #000000;
+}
+
+* {
+  box-sizing: border-box;
+}
