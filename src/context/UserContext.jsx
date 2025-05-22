@@ -26,7 +26,6 @@ export const UserProvider = ({ children }) => {
     setToken(null);
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    localStorage.removeItem("lovedMovies");
   };
 
   return (
