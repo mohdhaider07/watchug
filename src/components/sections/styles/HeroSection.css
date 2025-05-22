@@ -5,6 +5,14 @@
   overflow: hidden;
 }
 
+.hero-section.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  height: 600px;
+}
+
 .hero-gradient {
   position: absolute;
   inset: 0;
