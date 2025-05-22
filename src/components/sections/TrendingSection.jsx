@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import "./styles/TrendingSection.css";
 import MovieCard from "../common/MovieCard";
 import Loader from "../common/Loader";
-import request, { getImageUrl } from "../../requestMethod";
+import { tmdbRequest, getImageUrl } from "../../requestMethod";
 
 const TrendingSection = () => {
   const [trendingMovies, setTrendingMovies] = useState([]);
@@ -13,10 +13,10 @@ const TrendingSection = () => {
     const fetchTrendingMovies = async () => {
       try {
         setLoading(true);
-        const response = await request.get("/trending/movie/day");
+        const response = await tmdbRequest.get("/trending/movie/day");
 
         // Format movies data
-        const movies = response.data.results.slice(0, 5).map((movie) => {
+        const movies = response.data.results.map((movie) => {
           // Generate random duration between 1h 30m and 3h 0m
           const minutes = Math.floor(Math.random() * 90) + 90; // 90 to 180 minutes
           const hours = Math.floor(minutes / 60);
@@ -77,7 +77,7 @@ const TrendingSection = () => {
   return (
     <section className="trending-section">
       <h2 className="trending-title">Trending Today</h2>
-      <div className="trending-grid">
+      <div className="movie-scroll-row">
         {trendingMovies.map((movie) => (
           <MovieCard key={movie.id} {...movie} />
         ))}

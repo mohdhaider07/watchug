@@ -2,7 +2,8 @@ import React, { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./styles/Navbar.css";
 import { FaSearch, FaTimes } from "react-icons/fa";
-import request, { getImageUrl } from "../../requestMethod";
+import { tmdbRequest, getImageUrl } from "../../requestMethod";
+import { useUser } from "../../context/UserContext";
 
 const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -11,6 +12,7 @@ const Navbar = () => {
   const [loading, setLoading] = useState(false);
   const searchInputRef = useRef(null);
   const searchResultsRef = useRef(null);
+  const { user, logout } = useUser();
   const navigate = useNavigate();
 
   // Handle search input changes
@@ -46,7 +48,7 @@ const Navbar = () => {
     const timer = setTimeout(async () => {
       try {
         setLoading(true);
-        const response = await request.get("/search/multi", {
+        const response = await tmdbRequest.get("/search/multi", {
           params: { query: searchQuery },
         });
 
@@ -107,6 +109,11 @@ const Navbar = () => {
       searchInputRef.current.focus();
     }
   }, [showSearch]);
+
+  const handleLogout = () => {
+    logout();
+    navigate("/signin");
+  };
 
   return (
     <nav className="navbar">
@@ -205,12 +212,42 @@ const Navbar = () => {
               <div className="search-no-results">No results found</div>
             )}
         </div>
-        <a href="/signin" className="navbar-signin">
-          Sign in
-        </a>
-        <a href="/signup" className="navbar-signup">
-          Sign up
-        </a>
+        {user ? (
+          <button
+            className="navbar-avatar-btn"
+            onClick={handleLogout}
+            title="Logout"
+            style={{
+              background: "#ede9fe",
+              color: "#6d28d9",
+              border: "none",
+              borderRadius: "50%",
+              width: 40,
+              height: 40,
+              fontWeight: 700,
+              fontSize: 20,
+              cursor: "pointer",
+              marginLeft: 16,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 2px 8px #0001",
+            }}
+          >
+            {user.name?.[0]?.toUpperCase() ||
+              user.username?.[0]?.toUpperCase() ||
+              "U"}
+          </button>
+        ) : (
+          <>
+            <a href="/signin" className="navbar-signin">
+              Sign in
+            </a>
+            <a href="/signup" className="navbar-signup">
+              Sign up
+            </a>
+          </>
+        )}
       </div>
     </nav>
   );

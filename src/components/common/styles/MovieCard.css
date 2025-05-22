@@ -5,6 +5,8 @@
   overflow: hidden;
   transition: transform 0.3s, box-shadow 0.3s;
   background: #18181b;
+  flex: 0 0 200px; /* Fixed width for MovieCard */
+  scroll-snap-align: start;
 }
 
 .movie-card:hover {
@@ -22,7 +24,7 @@
   position: absolute;
   top: 8px;
   left: 8px;
-  background: #2563eb;
+  background: #9333ea;
   color: #fff;
   font-size: 0.75rem;
   padding: 2px 8px;
@@ -162,4 +164,56 @@
   z-index: 5; /* Lower than other clickable elements */
   cursor: pointer;
   opacity: 0;
+}
+
+.movie-card-heart-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  z-index: 20;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.movie-card-heart-btn.show-on-hover-left {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  z-index: 20;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.movie-card:hover .movie-card-heart-btn.show-on-hover-left {
+  opacity: 1;
+}
+
+.movie-card-heart-btn:focus {
+  outline: 2px solid #ef4444;
+}
+
+.movie-scroll-row {
+  display: flex;
+  gap: 24px;
+  overflow-x: auto;
+  padding-bottom: 16px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.movie-scroll-row::-webkit-scrollbar {
+  display: none;
 }

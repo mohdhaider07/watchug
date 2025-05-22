@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./styles/HeroSection.css";
 import { FaStar, FaPlay, FaChevronLeft, FaChevronRight } from "react-icons/fa";
-import request, { getImageUrl } from "../../requestMethod";
+import { tmdbRequest, getImageUrl } from "../../requestMethod";
 
 const HeroSection = () => {
   const navigate = useNavigate();
@@ -17,17 +17,17 @@ const HeroSection = () => {
     const fetchMovies = async () => {
       try {
         setLoading(true);
-        const response = await request.get("/movie/popular");
+        const response = await tmdbRequest.get("/movie/popular");
         // Get top 5 movies for the hero slider
-        const heroMovies = response.data.results.slice(0, 5).map(movie => ({
+        const heroMovies = response.data.results.slice(0, 5).map((movie) => ({
           id: movie.id,
           title: movie.title,
           image: getImageUrl(movie.backdrop_path),
           rating: movie.vote_average.toFixed(1),
           quality: movie.vote_average > 7.5 ? "4K" : "1080p",
-          year: movie.release_date.split('-')[0],
+          year: movie.release_date.split("-")[0],
           country: "USA", // Not available in API, using default
-          desc: movie.overview
+          desc: movie.overview,
         }));
         setMovies(heroMovies);
         setError(null);
@@ -67,7 +67,9 @@ const HeroSection = () => {
 
   // Loading state
   if (loading) {
-    return <div className="hero-section loading">Loading featured movies...</div>;
+    return (
+      <div className="hero-section loading">Loading featured movies...</div>
+    );
   }
 
   // Error state
@@ -77,26 +79,30 @@ const HeroSection = () => {
 
   // No movies found
   if (movies.length === 0) {
-    return <div className="hero-section empty">No featured movies available</div>;
+    return (
+      <div className="hero-section empty">No featured movies available</div>
+    );
   }
 
   const hero = movies[current];
-  
+
   return (
     <section className="hero-section">
       <div className="hero-gradient"></div>
-      <div 
-        className={`hero-image-container ${isChanging ? "flash-animation" : ""}`}
+      <div
+        className={`hero-image-container ${
+          isChanging ? "flash-animation" : ""
+        }`}
         onClick={handleNavigateToMovie}
-        style={{ cursor: 'pointer' }}
+        style={{ cursor: "pointer" }}
       >
         <img src={hero.image} alt={hero.title} className="hero-bg-img" />
       </div>
       <div className="hero-content">
-        <h1 
-          className="hero-title" 
+        <h1
+          className="hero-title"
           onClick={handleNavigateToMovie}
-          style={{ cursor: 'pointer' }}
+          style={{ cursor: "pointer" }}
         >
           {hero.title}
         </h1>
@@ -110,10 +116,7 @@ const HeroSection = () => {
           <span className="hero-year">{hero.year}</span>
         </div>
         <p className="hero-desc">{hero.desc}</p>
-        <button 
-          className="hero-watch-btn"
-          onClick={handleNavigateToMovie}
-        >
+        <button className="hero-watch-btn" onClick={handleNavigateToMovie}>
           <FaPlay className="hero-play" />
           Watch now
         </button>

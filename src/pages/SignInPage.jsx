@@ -1,20 +1,38 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./styles/SignPages.css";
+import { apiRequest } from "../requestMethod";
+import { useUser } from "../context/UserContext";
 
 const MOVIE_COLLAGE_URL = "/poster.jpeg";
 
 const SignInPage = () => {
   const [form, setForm] = useState({ identifier: "", password: "" });
-  const [error] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { login } = useUser();
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: Add sign-in logic
+    setError("");
+    setLoading(true);
+    try {
+      const res = await apiRequest.post("/auth/login", {
+        identifier: form.identifier,
+        password: form.password,
+      });
+      login(res.data.user, res.data.token);
+      navigate("/");
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || "Login failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -49,8 +67,8 @@ const SignInPage = () => {
             required
           />
           {error && <div className="sign-error">{error}</div>}
-          <button className="sign-btn" type="submit">
-            Continue
+          <button className="sign-btn" type="submit" disabled={loading}>
+            {loading ? "Signing in..." : "Continue"}
           </button>
         </form>
         <div className="sign-bottom-text">

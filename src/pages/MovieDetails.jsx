@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import "./styles/MovieDetails.css";
 import { FaStar, FaPlay, FaArrowLeft } from "react-icons/fa";
-import request, { getImageUrl } from "../requestMethod";
+import { tmdbRequest, getImageUrl } from "../requestMethod";
 import Footer from "../components/layout/Footer";
 import MovieCard from "../components/common/MovieCard";
 import Loader from "../components/common/Loader";
@@ -18,14 +18,14 @@ const MovieDetails = () => {
   useEffect(() => {
     const fetchMovieDetails = async () => {
       if (!id) return;
-      
+
       try {
         setLoading(true);
         // Get detailed movie info with credits and similar movies
-        const response = await request.get(`/movie/${id}`, {
-          params: { append_to_response: "credits,similar,videos" }
+        const response = await tmdbRequest.get(`/movie/${id}`, {
+          params: { append_to_response: "credits,similar,videos" },
         });
-        
+
         setMovie({
           id: response.data.id,
           title: response.data.title,
@@ -33,45 +33,60 @@ const MovieDetails = () => {
           poster: getImageUrl(response.data.poster_path),
           overview: response.data.overview,
           rating: response.data.vote_average.toFixed(1),
-          year: response.data.release_date?.split('-')[0] || '',
+          year: response.data.release_date?.split("-")[0] || "",
           runtime: response.data.runtime,
           genres: response.data.genres,
           tagline: response.data.tagline,
           cast: response.data.credits?.cast?.slice(0, 5) || [],
-          director: response.data.credits?.crew?.find(person => person.job === "Director")?.name || 'Unknown',
-          trailer: response.data.videos?.results?.find(video => 
-            video.type === "Trailer" && video.site === "YouTube"
-          )?.key || null
+          director:
+            response.data.credits?.crew?.find(
+              (person) => person.job === "Director"
+            )?.name || "Unknown",
+          trailer:
+            response.data.videos?.results?.find(
+              (video) => video.type === "Trailer" && video.site === "YouTube"
+            )?.key || null,
         });
-        
+
         // Format similar movies
         if (response.data.similar?.results) {
-          const similar = response.data.similar.results.slice(0, 4).map(movie => {
-            // Generate random duration between 1h 30m and 3h 0m
-            const minutes = Math.floor(Math.random() * 90) + 90; // 90 to 180 minutes
-            const hours = Math.floor(minutes / 60);
-            const remainingMinutes = minutes % 60;
-            const randomDuration = `${hours}h ${remainingMinutes}m`;
+          const similar = response.data.similar.results
+            .slice(0, 4)
+            .map((movie) => {
+              // Generate random duration between 1h 30m and 3h 0m
+              const minutes = Math.floor(Math.random() * 90) + 90; // 90 to 180 minutes
+              const hours = Math.floor(minutes / 60);
+              const remainingMinutes = minutes % 60;
+              const randomDuration = `${hours}h ${remainingMinutes}m`;
 
-            return {
-              id: movie.id,
-              title: movie.title,
-              image: getImageUrl(movie.poster_path),
-              rating: movie.vote_average.toFixed(1),
-              quality: movie.vote_average > 7.5 ? "4K" : "1080p",
-              meta: `${movie.release_date ? movie.release_date.split('-')[0] : ''} • ${randomDuration}`,
-              genre: movie.genre_ids && movie.genre_ids.length > 0 ? 
-                movie.genre_ids[0] === 28 ? "Action" :
-                movie.genre_ids[0] === 35 ? "Comedy" :
-                movie.genre_ids[0] === 18 ? "Drama" :
-                movie.genre_ids[0] === 27 ? "Horror" :
-                movie.genre_ids[0] === 878 ? "Sci-Fi" : "Movie"
-                : "Movie"
-            };
-          });
+              return {
+                id: movie.id,
+                title: movie.title,
+                image: getImageUrl(movie.poster_path),
+                rating: movie.vote_average.toFixed(1),
+                quality: movie.vote_average > 7.5 ? "4K" : "1080p",
+                meta: `${
+                  movie.release_date ? movie.release_date.split("-")[0] : ""
+                } • ${randomDuration}`,
+                genre:
+                  movie.genre_ids && movie.genre_ids.length > 0
+                    ? movie.genre_ids[0] === 28
+                      ? "Action"
+                      : movie.genre_ids[0] === 35
+                      ? "Comedy"
+                      : movie.genre_ids[0] === 18
+                      ? "Drama"
+                      : movie.genre_ids[0] === 27
+                      ? "Horror"
+                      : movie.genre_ids[0] === 878
+                      ? "Sci-Fi"
+                      : "Movie"
+                    : "Movie",
+              };
+            });
           setSimilarMovies(similar);
         }
-        
+
         setError(null);
       } catch (err) {
         console.error("Error fetching movie details:", err);
@@ -86,7 +101,7 @@ const MovieDetails = () => {
 
   // Handle back button click
   const handleBack = () => {
-    navigate('/'); // Navigate back to home page
+    navigate("/"); // Navigate back to home page
   };
 
   if (loading) {
@@ -98,7 +113,9 @@ const MovieDetails = () => {
   }
 
   if (error || !movie) {
-    return <div className="movie-details-error">{error || "Movie not found"}</div>;
+    return (
+      <div className="movie-details-error">{error || "Movie not found"}</div>
+    );
   }
 
   return (
@@ -109,12 +126,12 @@ const MovieDetails = () => {
           <img src={movie.backdrop} alt={movie.title} />
           <div className="backdrop-gradient"></div>
         </div>
-        
+
         {/* Back button */}
         <button className="back-button" onClick={handleBack}>
           <FaArrowLeft /> Back
         </button>
-        
+
         {/* Main content */}
         <div className="movie-content">
           <div className="movie-poster">
@@ -123,11 +140,13 @@ const MovieDetails = () => {
               <FaPlay /> Watch Now
             </button>
           </div>
-          
+
           <div className="movie-info">
             <h1>{movie.title}</h1>
-            {movie.tagline && <p className="movie-tagline">"{movie.tagline}"</p>}
-            
+            {movie.tagline && (
+              <p className="movie-tagline">"{movie.tagline}"</p>
+            )}
+
             <div className="movie-meta">
               <span className="movie-rating">
                 <FaStar /> {movie.rating}
@@ -137,39 +156,41 @@ const MovieDetails = () => {
                 {Math.floor(movie.runtime / 60)}h {movie.runtime % 60}m
               </span>
             </div>
-            
+
             <div className="movie-genres">
-              {movie.genres.map(genre => (
+              {movie.genres.map((genre) => (
                 <span key={genre.id} className="genre-tag">
                   {genre.name}
                 </span>
               ))}
             </div>
-            
+
             <div className="movie-overview">
               <h2>Overview</h2>
               <p>{movie.overview}</p>
             </div>
-            
+
             <div className="movie-credits">
               <div className="movie-director">
                 <h3>Director</h3>
                 <p>{movie.director}</p>
               </div>
-              
+
               <div className="movie-cast">
                 <h3>Cast</h3>
                 <div className="cast-list">
-                  {movie.cast.map(person => (
+                  {movie.cast.map((person) => (
                     <div key={person.id} className="cast-member">
                       <div className="cast-photo">
                         {person.profile_path ? (
-                          <img 
-                            src={getImageUrl(person.profile_path)} 
-                            alt={person.name} 
+                          <img
+                            src={getImageUrl(person.profile_path)}
+                            alt={person.name}
                           />
                         ) : (
-                          <div className="placeholder-avatar">{person.name[0]}</div>
+                          <div className="placeholder-avatar">
+                            {person.name[0]}
+                          </div>
                         )}
                       </div>
                       <p>{person.name}</p>
@@ -178,7 +199,7 @@ const MovieDetails = () => {
                 </div>
               </div>
             </div>
-            
+
             {movie.trailer && (
               <div className="movie-trailer">
                 <h2>Trailer</h2>
@@ -195,21 +216,19 @@ const MovieDetails = () => {
             )}
           </div>
         </div>
-        
+
         {/* Similar Movies Section */}
         {similarMovies.length > 0 && (
           <div className="similar-movies">
             <h2>Similar Movies</h2>
             <div className="similar-movies-grid">
-              {similarMovies.map(movie => (
+              {similarMovies.map((movie) => (
                 <MovieCard key={movie.id} {...movie} />
               ))}
             </div>
           </div>
         )}
       </div>
-      
-      <Footer />
     </>
   );
 };

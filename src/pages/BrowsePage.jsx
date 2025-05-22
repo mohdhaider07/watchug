@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { FaChevronDown } from "react-icons/fa";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import BrowseHeader from "../components/browse/BrowseHeader";
 import BrowseFilters from "../components/browse/BrowseFilters";
 import BrowseResults from "../components/browse/BrowseResults";
-import BrowsePagination from "../components/browse/BrowsePagination";
-import request from "../requestMethod";
+import Loader from "../components/common/Loader";
+import { tmdbRequest } from "../requestMethod";
 import "./styles/BrowsePage.css";
 
 const BrowsePage = () => {
@@ -29,7 +30,6 @@ const BrowsePage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(0);
   const [genres, setGenres] = useState([]);
   const [selectedGenres, setSelectedGenres] = useState(
     initialGenre ? initialGenre.split(",").map(Number) : []
@@ -38,6 +38,8 @@ const BrowsePage = () => {
   const [selectedYear, setSelectedYear] = useState(initialYear || "");
   const [sortBy, setSortBy] = useState(initialSort);
   const [showFilters, setShowFilters] = useState(false);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
 
   // Generate years from 1900 to current year
   useEffect(() => {
@@ -56,7 +58,7 @@ const BrowsePage = () => {
         // Determine endpoint based on content type
         const endpoint =
           contentType === "tvshows" ? "genre/tv/list" : "genre/movie/list";
-        const { data } = await request.get(endpoint);
+        const { data } = await tmdbRequest.get(endpoint);
         setGenres(data.genres || []);
       } catch (error) {
         console.error("Error fetching genres:", error);
@@ -89,101 +91,112 @@ const BrowsePage = () => {
     navigate,
   ]);
 
-  // Fetch content based on filters
-  const fetchContent = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  // Fetch content based on filters (modified for lazy loading)
+  const fetchContent = useCallback(
+    async (isLoadMore = false, customPage = 1) => {
+      if (isLoadMore) setIsFetchingMore(true);
+      else setLoading(true);
+      setError(null);
 
-    try {
-      let endpoint;
-      let params = {
-        page,
-      };
+      try {
+        let endpoint;
+        let params = {
+          page: customPage,
+        };
 
-      // Add sort parameter based on content type
-      if (sortBy) {
-        // Handle different sort parameters for TV shows
-        if (
-          contentType === "tvshows" &&
-          sortBy.startsWith("primary_release_date")
-        ) {
-          // Convert movie date parameter to TV date parameter
-          params.sort_by = sortBy.replace(
-            "primary_release_date",
-            "first_air_date"
+        // Add sort parameter based on content type
+        if (sortBy) {
+          // Handle different sort parameters for TV shows
+          if (
+            contentType === "tvshows" &&
+            sortBy.startsWith("primary_release_date")
+          ) {
+            // Convert movie date parameter to TV date parameter
+            params.sort_by = sortBy.replace(
+              "primary_release_date",
+              "first_air_date"
+            );
+          } else {
+            params.sort_by = sortBy;
+          }
+        }
+
+        // Handle search query
+        if (searchQuery) {
+          endpoint = "search/multi";
+          params.query = searchQuery;
+        }
+        // Handle content type
+        else {
+          switch (contentType) {
+            case "popular":
+              endpoint = "movie/popular";
+              break;
+            case "movies":
+              endpoint = "discover/movie";
+              break;
+            case "tvshows":
+              endpoint = "discover/tv";
+              break;
+            default:
+              endpoint = "trending/all/week";
+          }
+        }
+
+        // Add year filter if selected
+        if (selectedYear) {
+          if (contentType === "tvshows") {
+            params.first_air_date_year = selectedYear;
+          } else {
+            params.primary_release_year = selectedYear;
+          }
+        }
+
+        // Add genre filter if selected
+        if (selectedGenres.length > 0) {
+          params.with_genres = selectedGenres.join(",");
+        }
+
+        console.log("API Request:", { endpoint, params });
+
+        // Get the data
+        const { data } = await tmdbRequest.get(endpoint, { params });
+
+        // Process the results based on the endpoint
+        let processedResults;
+        if (searchQuery && endpoint === "search/multi") {
+          // Filter out people and other non-movie/tv results
+          processedResults = data.results.filter(
+            (item) => item.media_type === "movie" || item.media_type === "tv"
           );
         } else {
-          params.sort_by = sortBy;
+          processedResults = data.results;
         }
-      }
 
-      // Handle search query
-      if (searchQuery) {
-        endpoint = "search/multi";
-        params.query = searchQuery;
-      }
-      // Handle content type
-      else {
-        switch (contentType) {
-          case "popular":
-            endpoint = "movie/popular";
-            break;
-          case "movies":
-            endpoint = "discover/movie";
-            break;
-          case "tvshows":
-            endpoint = "discover/tv";
-            break;
-          default:
-            endpoint = "trending/all/week";
-        }
-      }
-
-      // Add year filter if selected
-      if (selectedYear) {
-        if (contentType === "tvshows") {
-          params.first_air_date_year = selectedYear;
+        setHasMore(customPage < Math.min(data.total_pages || 0, 100));
+        if (isLoadMore) {
+          setItems((prev) => [...prev, ...(processedResults || [])]);
         } else {
-          params.primary_release_year = selectedYear;
+          setItems(processedResults || []);
         }
+      } catch (err) {
+        setError("Failed to load content. Please try again.");
+        if (!isLoadMore) setItems([]);
+        console.error("Error fetching content:", err);
+      } finally {
+        if (isLoadMore) setIsFetchingMore(false);
+        else setLoading(false);
       }
-
-      // Add genre filter if selected
-      if (selectedGenres.length > 0) {
-        params.with_genres = selectedGenres.join(",");
-      }
-
-      console.log("API Request:", { endpoint, params });
-
-      // Get the data
-      const { data } = await request.get(endpoint, { params });
-
-      // Process the results based on the endpoint
-      let processedResults;
-      if (searchQuery && endpoint === "search/multi") {
-        // Filter out people and other non-movie/tv results
-        processedResults = data.results.filter(
-          (item) => item.media_type === "movie" || item.media_type === "tv"
-        );
-      } else {
-        processedResults = data.results;
-      }
-
-      setItems(processedResults || []);
-      setTotalPages(Math.min(data.total_pages || 0, 100)); // API limit is 500 pages, but we're limiting to 100
-    } catch (err) {
-      console.error("Error fetching content:", err);
-      setError("Failed to load content. Please try again.");
-      setItems([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, contentType, searchQuery, selectedGenres, selectedYear, sortBy]);
+    },
+    [contentType, searchQuery, selectedGenres, selectedYear, sortBy]
+  );
 
   // Apply filters and fetch content
   useEffect(() => {
-    fetchContent();
-  }, [fetchContent]);
+    // Only fetch fresh data (replace) when filters/search change or page is 1
+    fetchContent(false, 1);
+    setPage(1);
+  }, [contentType, searchQuery, selectedGenres, selectedYear, sortBy]);
 
   // Update URL when filters change
   useEffect(() => {
@@ -267,6 +280,13 @@ const BrowsePage = () => {
     }
   };
 
+  // Handle next page button click
+  const handleNextPage = () => {
+    const nextPage = page + 1;
+    fetchContent(true, nextPage);
+    setPage(nextPage);
+  };
+
   return (
     <>
       <div className="browse-page">
@@ -304,14 +324,52 @@ const BrowsePage = () => {
             fetchContent={fetchContent}
             contentType={contentType}
           />
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <BrowsePagination
-              page={page}
-              totalPages={totalPages}
-              setPage={setPage}
-            />
+          {/* Pagination: Load More button */}
+          {hasMore && !loading && (
+            <div style={{ textAlign: "center", padding: "2rem" }}>
+              {isFetchingMore ? (
+                <Loader size="sm" text="" type="film" />
+              ) : (
+                <button
+                  className="load-more-btn"
+                  onClick={handleNextPage}
+                  style={{
+                    background: "#6d28d9",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "6px",
+                    padding: "0.75rem 2.5rem",
+                    fontSize: "1.1rem",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    boxShadow: "0 2px 8px #0001",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                    transition: "background 0.2s",
+                  }}
+                >
+                  <FaChevronDown
+                    style={{
+                      marginRight: 8,
+                      verticalAlign: "middle",
+                    }}
+                  />
+                  Load More
+                </button>
+              )}
+            </div>
+          )}
+          {!hasMore && !loading && (
+            <div
+              style={{
+                textAlign: "center",
+                color: "#a1a1aa",
+                padding: "2rem",
+              }}
+            >
+              <span>No more results.</span>
+            </div>
           )}
         </div>
       </div>

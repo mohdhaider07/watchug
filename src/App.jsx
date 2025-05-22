@@ -7,24 +7,27 @@ import SignInPage from "./pages/SignInPage";
 import SignUpPage from "./pages/SignUpPage";
 import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
+import { UserProvider } from "./context/UserContext";
 import "./App.css";
 
 function App() {
   return (
-    <div id="webcrumbs">
-      <div className="app-container">
-        <Navbar />
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/movie/:id" element={<MovieDetails />} />
-          <Route path="/tv/:id" element={<MovieDetails />} />
-          <Route path="/browse" element={<BrowsePage />} />
-          <Route path="/signin" element={<SignInPage />} />
-          <Route path="/signup" element={<SignUpPage />} />
-        </Routes>
-        <Footer />
+    <UserProvider>
+      <div id="webcrumbs">
+        <div className="app-container">
+          <Navbar />
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/movie/:id" element={<MovieDetails />} />
+            <Route path="/tv/:id" element={<MovieDetails />} />
+            <Route path="/browse" element={<BrowsePage />} />
+            <Route path="/signin" element={<SignInPage />} />
+            <Route path="/signup" element={<SignUpPage />} />
+          </Routes>
+          <Footer />
+        </div>
       </div>
-    </div>
+    </UserProvider>
   );
 }
 

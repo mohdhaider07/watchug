@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import "./styles/NewReleasesSection.css";
 import MovieCard from "../common/MovieCard";
 import Loader from "../common/Loader";
-import request, { getImageUrl } from "../../requestMethod";
+import { tmdbRequest, getImageUrl } from "../../requestMethod";
 
 const NewReleasesSection = () => {
   const [newReleases, setNewReleases] = useState([]);
@@ -13,10 +13,10 @@ const NewReleasesSection = () => {
     const fetchNewReleases = async () => {
       try {
         setLoading(true);
-        const response = await request.get("/movie/now_playing");
+        const response = await tmdbRequest.get("/movie/now_playing");
 
         // Format movies data
-        const movies = response.data.results.slice(0, 5).map((movie) => {
+        const movies = response.data.results.map((movie) => {
           // Generate random duration between 1h 30m and 3h 0m
           const minutes = Math.floor(Math.random() * 90) + 90; // 90 to 180 minutes
           const hours = Math.floor(minutes / 60);
@@ -83,7 +83,7 @@ const NewReleasesSection = () => {
   return (
     <section className="new-releases-section">
       <h2 className="new-releases-title">New Releases</h2>
-      <div className="new-releases-grid">
+      <div className="movie-scroll-row">
         {newReleases.map((movie) => (
           <MovieCard key={movie.id} {...movie} />
         ))}

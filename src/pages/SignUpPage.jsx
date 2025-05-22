@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./styles/SignPages.css";
+import { apiRequest } from "../requestMethod";
 
 const MOVIE_COLLAGE_URL = "/poster.jpeg";
 
@@ -13,18 +14,31 @@ const SignUpPage = () => {
     confirmPassword: "",
   });
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (form.password !== form.confirmPassword) {
       setError("Passwords do not match");
       return;
     }
-    // TODO: Add sign-up logic
+    setError("");
+    try {
+      const res = await apiRequest.post("/auth/signup", {
+        name: form.name,
+        username: form.username,
+        email: form.email,
+        password: form.password,
+      });
+      localStorage.setItem("token", res.data.token);
+      navigate("/");
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || "Signup failed");
+    }
   };
 
   return (
