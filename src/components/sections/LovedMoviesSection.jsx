@@ -64,8 +64,6 @@ const LovedMoviesSection = () => {
     fetchLovedMovies();
   }, [user, token]);
 
-  if (!user) return null;
-
   return (
     <section
       className="loved-movies-section"
@@ -81,7 +79,11 @@ const LovedMoviesSection = () => {
       >
         Loved Movies
       </h2>
-      {loading ? (
+      {!user ? (
+        <div style={{ color: "#a1a1aa", textAlign: "center", padding: 24 }}>
+          Login to create your collection of loved movies
+        </div>
+      ) : loading ? (
         <Loader size="md" text="Loading loved movies..." type="movie" />
       ) : error ? (
         <div style={{ color: "#ef4444", textAlign: "center", padding: 24 }}>

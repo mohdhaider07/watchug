@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "./styles/HeroSection.css";
 import { FaStar, FaPlay, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { tmdbRequest, getImageUrl } from "../../requestMethod";
+import Loader from "../common/Loader";
 
 const HeroSection = () => {
   const navigate = useNavigate();
@@ -68,7 +69,9 @@ const HeroSection = () => {
   // Loading state
   if (loading) {
     return (
-      <div className="hero-section loading">Loading featured movies...</div>
+      <div className="hero-section loading">
+        <Loader size="md" text="Loading featured movies..." type="movie" />
+      </div>
     );
   }
 
