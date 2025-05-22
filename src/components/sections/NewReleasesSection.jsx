@@ -29,7 +29,9 @@ const NewReleasesSection = () => {
             image: getImageUrl(movie.poster_path),
             quality: movie.vote_average > 7.5 ? "4K" : "1080p",
             rating: movie.vote_average.toFixed(1),
-            meta: `${movie.release_date ? movie.release_date.split("-")[0] : ""} • ${randomDuration}`,
+            meta: `${
+              movie.release_date ? movie.release_date.split("-")[0] : ""
+            } • ${randomDuration}`,
             genre:
               movie.genre_ids && movie.genre_ids.length > 0
                 ? movie.genre_ids[0] === 28
