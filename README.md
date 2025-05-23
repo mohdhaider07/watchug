@@ -22,7 +22,7 @@ This is the frontend for the Movie App project. It allows users to browse, searc
 
 ```bash
 git clone <your-repo-url>
-cd unit-project/frontend
+cd /frontend
 ```
 
 ### 2. Install dependencies
