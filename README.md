@@ -1,12 +1,52 @@
-# React + Vite
+# Movie App Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is the frontend for the Movie App project. It allows users to browse, search, and view details about movies. Authenticated users can sign up, sign in, and create a personalized collection of "Loved Movies".
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Browse trending and new release movies
+- Search for movies
+- View detailed information about each movie
+- User authentication (Sign Up, Sign In)
+- Add/remove movies to/from your "Loved Movies" collection
 
-## Expanding the ESLint configuration
+## Tech Stack
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- React (with Vite)
+- Axios for API requests
+- Context API for user state management
+
+## Setup Instructions
+
+### 1. Clone the repository
+
+```bash
+git clone <your-repo-url>
+cd unit-project/frontend
+```
+
+### 2. Install dependencies
+
+```bash
+npm install
+```
+
+### 3. Add your TMDB API key and backend API URL
+
+Create a `.env` file in the `frontend` folder with the following content:
+
+```
+VITE_API_URL=http://localhost:5000/api
+VITE_TMDB_API_KEY=<your-tmdb-api-key>
+```
+
+- Replace `<your-tmdb-api-key>` with your TMDB API key (get it from https://www.themoviedb.org/).
+- If your backend runs on a different URL/port, update `VITE_API_URL` accordingly.
+
+### 4. Start the frontend
+
+```bash
+npm run dev
+```
+
+The app will be available at `http://localhost:5173`.
